@@ -51,11 +51,14 @@ module.exports = {
             },
           ],
       },
-      settings: {
+      "settings": {
+        "react": {
+          "version": "detect"
+        },
         'import/resolver': {
-          node: {
-            paths: ['src'],
-            extensions: ['.js', '.jsx', '.ts', '.tsx']
+          "node": {
+            "paths": ['src'],
+            "extensions": ['.js', '.jsx', '.ts', '.tsx']
           },
         },
     }
