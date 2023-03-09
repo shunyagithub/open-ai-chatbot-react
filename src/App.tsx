@@ -1,18 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import {
-  OpenAIApi,
-  Configuration,
-  ChatCompletionRequestMessageRoleEnum,
-} from 'openai';
+import { useEffect, useState } from 'react';
+import { OpenAIApi, Configuration, ChatCompletionRequestMessageRoleEnum } from 'openai';
 import type { ChatCompletionRequestMessage } from 'openai';
 import CHAT_GPT_SYSTEM_PROMPT from './api/prompt';
 
 function App() {
   const [input, setInput] = useState<string>('');
   const [answer, setAnswer] = useState<string>('');
-  const [prevMessages, setPrevMessages] = useState<
-    ChatCompletionRequestMessage[]
-  >([]);
+  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [disabled, setDisabled] = useState<boolean>(false);
 
   const configuration = new Configuration({
@@ -38,10 +32,7 @@ function App() {
       top_p: 0.5,
       frequency_penalty: 0.5,
     });
-    return response.data.choices[0].message?.content.replace(
-      '\n',
-      ''
-    ) as string;
+    return response.data.choices[0].message?.content.replace('\n', '') as string;
   };
 
   useEffect(() => {
@@ -82,12 +73,7 @@ function App() {
         }}
         placeholder="お話しよう"
       />
-      <button
-        type="button"
-        className="button"
-        disabled={disabled}
-        onClick={handleClick}
-      >
+      <button type="button" className="button" disabled={disabled} onClick={handleClick}>
         Chat
       </button>
       <ul>

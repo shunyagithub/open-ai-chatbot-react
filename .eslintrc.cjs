@@ -25,6 +25,8 @@ module.exports = {
         devDependencies: true,
       },
     ],
+    'react/jsx-uses-react': 'off',
+    'react/react-in-jsx-scope': 'off',
   },
   settings: {
     'import/resolver': {
@@ -35,5 +37,5 @@ module.exports = {
       },
     },
   },
-  ignorePatterns: ['vite.config.ts'],
+  ignorePatterns: ['vite.config.ts', '**/*.cjs'],
 };
