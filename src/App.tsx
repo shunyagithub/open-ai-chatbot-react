@@ -4,11 +4,13 @@ import type { FC } from 'react'
 import './App.css'
 import { OpenAIApi, Configuration, ChatCompletionRequestMessageRoleEnum } from 'openai'
 import type { ChatCompletionRequestMessage } from 'openai'
+import { CHAT_GPT_SYSTEM_PROMPT } from './api/prompt'
 
 const App: FC = () => {
   const [input, setInput] = useState<string>('')
   const [answer, setAnswer] = useState<string>('')
   const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>([])
+  const [disabled, setDisabled] = useState(false)
 
   const configuration = new Configuration({
     apiKey: process.env.REACT_APP_OPEN_AI_API_KEY,
@@ -18,12 +20,13 @@ const App: FC = () => {
   const model = 'gpt-3.5-turbo'
 
   const fetchData = async (input: string): Promise<string> => {
+    setDisabled(true)
     const response = await openai.createChatCompletion({
       model,
       messages: [
         {
           role: ChatCompletionRequestMessageRoleEnum.System,
-          content: `The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly.\n\nHuman: Hello, who are you?\nAI: I am an AI created by OpenAI. How can I help you today?\nHuman: I'd like to cancel my subscription.\nAI`,
+          content: CHAT_GPT_SYSTEM_PROMPT,
         },
         ...prevMessages,
         { role: ChatCompletionRequestMessageRoleEnum.User, content: input },
@@ -49,7 +52,8 @@ const App: FC = () => {
     if (input !== '' && answer !== '') {
       setPrevMessages([...prevMessages, ...newMessages])
     }
-    setInput('')
+    setInput('') // 質問欄をリセット
+    setDisabled(false)
   }, [answer])
 
   const handleClick = async (): Promise<void> => {
@@ -63,16 +67,15 @@ const App: FC = () => {
 
   return (
     <div className="container">
-      <h2>Tell me something, and I&apos;ll tell you more</h2>
-      <textarea
+      <h2>OPEN AIとお話</h2>
+      <input
         value={input}
         onChange={(event) => {
           setInput(event.target.value)
         }}
-        rows={5}
-        placeholder="Type in some words and I'll finish the rest..."
+        placeholder="お話しよう"
       />
-      <button className="button" onClick={handleClick}>
+      <button className="button" disabled={disabled} onClick={handleClick}>
         Chat
       </button>
       <ul>
