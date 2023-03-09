@@ -56,6 +56,7 @@ function App() {
     setAnswer('');
     setDisabled(false);
 
+    // うまく下までスクロールしない
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -68,6 +69,8 @@ function App() {
 
   const handleClick = (): void => {
     setDisabled(true);
+
+    // うまく下までスクロールしない
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' });
     }
