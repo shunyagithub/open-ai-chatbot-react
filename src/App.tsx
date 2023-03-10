@@ -1,19 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
-import { OpenAIApi, Configuration, ChatCompletionRequestMessageRoleEnum } from 'openai';
+import * as Toast from '@radix-ui/react-toast';
+import { X } from 'lucide-react';
 import type { ChatCompletionRequestMessage } from 'openai';
+import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
+import { useEffect, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import CHAT_GPT_SYSTEM_PROMPT from './api/prompt';
-import cn from './lib/utils';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
+import fakeCnversation from './lib/conversation';
+import cn from './lib/utils';
 
 function App() {
+  const [open, setOpen] = useState(false);
   const [input, setInput] = useState<string>('');
-  const [answer, setAnswer] = useState<string>('');
-  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>([]);
-  const [disabled, setDisabled] = useState<boolean>(false);
+  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>(fakeCnversation);
+  const [sending, setSending] = useState<boolean>(false);
 
-  const bottomRef = useRef<HTMLLIElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const configuration = new Configuration({
@@ -40,85 +43,70 @@ function App() {
     return response.data.choices[0].message?.content as string;
   };
 
-  useEffect(() => {
-    if (answer === '') {
-      return;
-    }
-
+  const addNewMessage = (role: ChatCompletionRequestMessageRoleEnum, content: string) => {
     const newMessages = [
       {
-        role: ChatCompletionRequestMessageRoleEnum.Assistant,
-        content: answer,
+        role,
+        content,
       },
     ];
-
     setPrevMessages((prevMessage) => [...prevMessage, ...newMessages]);
-    setAnswer('');
-    setDisabled(false);
-
-    // うまく下までスクロールしない
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    if (inputRef.current) {
-      inputRef.current.blur(); // フォーカスを外す
-      setTimeout(() => inputRef.current?.focus(), 0); // フォーカスを移動する
-    }
-  }, [answer, bottomRef, inputRef]);
+  };
 
   const handleClick = (): void => {
-    setDisabled(true);
+    setSending(true);
+    addNewMessage(ChatCompletionRequestMessageRoleEnum.User, input);
 
-    // うまく下までスクロールしない
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-    const newMessages = [
-      {
-        role: ChatCompletionRequestMessageRoleEnum.User,
-        content: input,
-      },
-    ];
-    setPrevMessages((prevMessage) => [...prevMessage, ...newMessages]);
     fetchData(input)
       .then((res) => {
-        setAnswer(res);
+        addNewMessage(ChatCompletionRequestMessageRoleEnum.Assistant, res);
         setInput(''); // 質問欄をリセット
+        setSending(false); // ボタンリセット
       })
       .catch(() => {
-        throw new Error('fetching error');
+        setOpen(true);
+        setInput(''); // 質問欄をリセット
+        setSending(false); // ボタンリセット
+        throw new Error('Fetching Error');
       });
   };
 
+  useEffect(() => {
+    inputRef.current?.blur(); // フォーカスを外す
+    inputRef.current?.focus();
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [bottomRef, inputRef, sending]);
+
   return (
-    <main className={cn('relative bg-slate-900 min-h-screen text-white flex justify-center')}>
-      <ul className="h-screen w-full bg-slate-800 p-4 overflow-y-auto pb-52 max-w-3xl">
-        {prevMessages?.map((messages) => {
-          const id = uuid();
-          return (
-            <li
-              key={id}
-              className={cn(
-                'break-words whitespace-pre-wrap max-w-xl w-fit p-4 sm:p-8 rounded-3xl flex mb-4 flex-col sm:flex-row',
-                messages.role === 'user' && 'bg-slate-700 ml-auto',
-                messages.role === 'assistant' && 'bg-slate-600'
-              )}
-            >
-              {messages.role === 'assistant' && <span className="text-lg mb-2 sm:mr-2">🐬</span>}
-              {messages.content}
-            </li>
-          );
-        })}
-        <li ref={bottomRef} />
-      </ul>
-      <form className="absolute bottom-0 left-0 bg-slate-900/80 backdrop-blur-md flex justify-center w-full">
-        <span className="flex flex-col sm:flex-row gap-4 w-full items-center max-w-3xl px-8 py-8 sm:p-12">
+    <main className={cn('relative flex max-h-screen min-h-screen justify-center bg-slate-900 text-white')}>
+      <div className="mb-24 w-full max-w-3xl">
+        <ul className={cn('chat relative h-full w-full overflow-y-auto bg-slate-800 p-4')}>
+          {prevMessages?.map((messages) => {
+            const id = uuid();
+            return (
+              <li
+                key={id}
+                className={cn(
+                  'mb-4 flex w-fit max-w-xl flex-col whitespace-pre-wrap break-words rounded-xl p-4 sm:flex-row sm:p-8',
+                  messages.role === 'user' && 'ml-auto bg-slate-700',
+                  messages.role === 'assistant' && 'bg-slate-600'
+                )}
+              >
+                {messages.role === 'assistant' && <span className="mb-2 text-4xl sm:mr-8">🐬</span>}
+                {messages.content}
+              </li>
+            );
+          })}
+          <div ref={bottomRef} />
+        </ul>
+      </div>
+      <form className="absolute bottom-0 left-0 flex h-32 w-full items-center justify-center bg-slate-900 sm:h-24">
+        <div className="flex w-full max-w-3xl flex-col items-center gap-4 px-4 sm:flex-row">
           <Input
             className=""
             ref={inputRef}
             type="text"
-            disabled={disabled}
+            disabled={sending}
             value={input}
             onChange={(event) => {
               setInput(event.target.value);
@@ -129,13 +117,36 @@ function App() {
             type="submit"
             variant="default"
             className="w-full sm:w-auto"
-            disabled={input === '' || disabled}
+            disabled={input === '' || sending}
             onClick={handleClick}
           >
             Chat
           </Button>
-        </span>
+        </div>
       </form>
+      <Toast.Provider swipeDirection="right">
+        <Toast.Root
+          className={cn(
+            'border-1 flex items-center justify-between gap-4 rounded-xl border-red-500 bg-red-100 p-4 shadow-md  transition-all'
+          )}
+          open={open}
+          onOpenChange={setOpen}
+        >
+          <Toast.Title className="font-medium text-red-600">エラーです。もう一度お試しください。</Toast.Title>
+          <Toast.Action asChild altText="Close">
+            <button
+              type="button"
+              className={cn(' rounded-xl p-4 ring-slate-800/20 transition-all hover:ring-2')}
+              onClick={() => setOpen(false)}
+            >
+              <X className="h-4 w-4 text-slate-800" />
+            </button>
+          </Toast.Action>
+        </Toast.Root>
+        <Toast.Viewport
+          className={cn('fixed bottom-0 right-0 z-50 m-0 flex w-full max-w-[100vw] flex-col gap-4 p-12 outline-none')}
+        />
+      </Toast.Provider>
     </main>
   );
 }
