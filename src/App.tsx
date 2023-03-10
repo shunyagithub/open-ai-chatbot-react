@@ -5,6 +5,7 @@ import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from '
 import { useEffect, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import CHAT_GPT_SYSTEM_PROMPT from './api/prompt';
+import './App.module.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import fakeCnversation from './lib/conversation';
@@ -80,7 +81,7 @@ function App() {
   return (
     <main className={cn('relative flex max-h-screen min-h-screen justify-center bg-slate-900 text-white')}>
       <div className="mb-24 w-full max-w-3xl">
-        <ul className={cn('chat relative h-full w-full overflow-y-auto bg-slate-800 p-4')}>
+        <ul className={cn('relative h-full w-full overflow-y-auto bg-slate-800 p-4')}>
           {prevMessages?.map((messages) => {
             const id = uuid();
             return (
