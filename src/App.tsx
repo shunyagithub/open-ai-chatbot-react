@@ -1,6 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unstable-nested-components */
+
 import * as Toast from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
 import type { ChatCompletionRequestMessage } from 'openai';
