@@ -14,14 +14,13 @@ import CHAT_GPT_SYSTEM_PROMPT from './api/prompt';
 import CodeBlock from './components/code_box';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import fakeConversation from './lib/conversation';
 import cn from './lib/utils';
 import ms from './styles/App.module.css';
 
 function App() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState<string>('');
-  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>(fakeConversation);
+  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>([]);
   const [sending, setSending] = useState<boolean>(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
