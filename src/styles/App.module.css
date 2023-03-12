@@ -1,0 +1,11 @@
+:root {
+  color-scheme: dark;
+}
+
+.markdown ul {
+  list-style: disc;
+}
+
+.markdown ol {
+  list-style: decimal;
+}

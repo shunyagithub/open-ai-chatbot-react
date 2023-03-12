@@ -30,7 +30,6 @@ module.exports = {
   },
   settings: {
     'import/resolver': {
-      //importするファイルをjsだけではなく、tsを含むファイルを許可する
       node: {
         paths: ['src'],
         extensions: ['.js', '.jsx', '.ts', '.tsx'],

@@ -1,20 +1,27 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react/no-unstable-nested-components */
 import * as Toast from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
 import type { ChatCompletionRequestMessage } from 'openai';
 import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
 import { useEffect, useRef, useState } from 'react';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
 import { v4 as uuid } from 'uuid';
 import CHAT_GPT_SYSTEM_PROMPT from './api/prompt';
-import './App.module.css';
+import CodeBlock from './components/code_box';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import fakeCnversation from './lib/conversation';
+import fakeConversation from './lib/conversation';
 import cn from './lib/utils';
+import ms from './styles/App.module.css';
 
 function App() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState<string>('');
-  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>(fakeCnversation);
+  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>(fakeConversation);
   const [sending, setSending] = useState<boolean>(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -61,19 +68,19 @@ function App() {
     fetchData(input)
       .then((res) => {
         addNewMessage(ChatCompletionRequestMessageRoleEnum.Assistant, res);
-        setInput(''); // 質問欄をリセット
-        setSending(false); // ボタンリセット
+        setInput('');
+        setSending(false);
       })
       .catch(() => {
         setOpen(true);
-        setInput(''); // 質問欄をリセット
-        setSending(false); // ボタンリセット
+        setInput('');
+        setSending(false);
         throw new Error('Fetching Error');
       });
   };
 
   useEffect(() => {
-    inputRef.current?.blur(); // フォーカスを外す
+    inputRef.current?.blur();
     inputRef.current?.focus();
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [bottomRef, inputRef, sending]);
@@ -88,13 +95,23 @@ function App() {
               <li
                 key={id}
                 className={cn(
-                  'mb-4 flex w-fit max-w-xl flex-col whitespace-pre-wrap break-words rounded-xl p-4 sm:flex-row sm:p-8',
+                  'w-fullflex-col mb-4 flex overflow-hidden whitespace-pre-wrap break-words rounded-xl p-4 sm:p-8',
                   messages.role === 'user' && 'ml-auto bg-slate-700',
                   messages.role === 'assistant' && 'bg-slate-600'
                 )}
               >
                 {messages.role === 'assistant' && <span className="mb-2 text-4xl sm:mr-8">🐬</span>}
-                {messages.content}
+                <ReactMarkdown
+                  components={{
+                    code: CodeBlock,
+                  }}
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeKatex]}
+                  includeElementIndex
+                  className={cn(ms.markdown)}
+                >
+                  {messages.content}
+                </ReactMarkdown>
               </li>
             );
           })}
@@ -112,7 +129,7 @@ function App() {
             onChange={(event) => {
               setInput(event.target.value);
             }}
-            placeholder="お話しよう"
+            placeholder="Let's Talk"
           />
           <Button
             type="submit"
@@ -133,7 +150,9 @@ function App() {
           open={open}
           onOpenChange={setOpen}
         >
-          <Toast.Title className="font-medium text-red-600">エラーです。もう一度お試しください。</Toast.Title>
+          <Toast.Title className="font-medium text-red-600">
+            Sorry, we couldn&apos;t fetch the data right now. Please try again later.
+          </Toast.Title>
           <Toast.Action asChild altText="Close">
             <button
               type="button"
