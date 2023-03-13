@@ -4,6 +4,8 @@ This repository contains a demo application that enables the use of OpenAI API w
 
 ## Overview
 
+![open_ai_chatbot_react_image](https://user-images.githubusercontent.com/56504519/224692633-eaa94b56-89d4-4a0a-923f-65f55a726b67.jpg)
+
 This demo application generates text using the OpenAI API. Users can input the type of text they want to generate and the text they want to use for generation. The application then uses the OpenAI API to automatically generate the text.
 
 ## Setup
