@@ -1,8 +1,11 @@
 {
-  "name": "e",
-  "private": true,
-  "version": "0.0.0",
+  "name": "open-ai-chatbot-react",
+  "private": false,
+  "version": "1.0.0",
+  "description": "Open AI API with React DEMO",
   "type": "module",
+  "author": "Shunya Koide",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
