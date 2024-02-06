@@ -1,11 +1,9 @@
-/* eslint-disable import/no-extraneous-dependencies */
-
 import * as Toast from '@radix-ui/react-toast';
 import { X } from 'lucide-react';
-import type { ChatCompletionRequestMessage } from 'openai';
-import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
+import { ChatCompletionMessageParam } from 'openai/resources';
 import { useEffect, useRef, useState } from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import Markdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import { v4 as uuid } from 'uuid';
@@ -19,38 +17,38 @@ import ms from './styles/App.module.css';
 function App() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState<string>('');
-  const [prevMessages, setPrevMessages] = useState<ChatCompletionRequestMessage[]>([]);
+  const [prevMessages, setPrevMessages] = useState<ChatCompletionMessageParam[]>([]);
   const [sending, setSending] = useState<boolean>(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const configuration = new Configuration({
-    apiKey: import.meta.env.VITE_OPEN_AI_API_KEY as string,
+  const openai = new OpenAI({
+    apiKey: import.meta.env.VITE_OPEN_AI_API_KEY as string, // This is the default and can be omitted
+    dangerouslyAllowBrowser: true,
   });
-
-  const openai = new OpenAIApi(configuration);
   const model = 'gpt-3.5-turbo';
 
-  const fetchData = async (message: string): Promise<string> => {
-    const response = await openai.createChatCompletion({
+  const fetchData = async (message: string): Promise<string | null> => {
+    const response = await openai.chat.completions.create({
       model,
       messages: [
         {
-          role: ChatCompletionRequestMessageRoleEnum.System,
+          role: 'system',
           content: CHAT_GPT_SYSTEM_PROMPT,
         },
-        ...prevMessages,
-        { role: ChatCompletionRequestMessageRoleEnum.User, content: message },
+        ...prevMessages, // TODO: add prevMessages
+        { role: 'user', content: message },
       ],
       top_p: 0.5,
       frequency_penalty: 0.5,
     });
-    return response.data.choices[0].message?.content as string;
+
+    return response.choices[0].message.content;
   };
 
-  const addNewMessage = (role: ChatCompletionRequestMessageRoleEnum, content: string) => {
-    const newMessages = [
+  const addNewMessage = (role: 'assistant' | 'user', content: string) => {
+    const newMessages: ChatCompletionMessageParam[] = [
       {
         role,
         content,
@@ -61,13 +59,17 @@ function App() {
 
   const handleClick = (): void => {
     setSending(true);
-    addNewMessage(ChatCompletionRequestMessageRoleEnum.User, input);
+    addNewMessage('user', input);
 
     fetchData(input)
       .then((res) => {
-        addNewMessage(ChatCompletionRequestMessageRoleEnum.Assistant, res);
-        setInput('');
-        setSending(false);
+        if (res === null) {
+          throw new Error('Fetching Error');
+        } else {
+          addNewMessage('assistant', res);
+          setInput('');
+          setSending(false);
+        }
       })
       .catch(() => {
         setOpen(true);
@@ -99,20 +101,23 @@ function App() {
                 )}
               >
                 {messages.role === 'assistant' && <span className="mb-2 text-4xl sm:mr-8">🐬</span>}
-                <ReactMarkdown
-                  components={{
-                    code: CodeBlock,
-                  }}
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeKatex]}
-                  includeElementIndex
-                  className={cn(ms.markdown)}
-                >
-                  {messages.content}
-                </ReactMarkdown>
+
+                {typeof messages.content === 'string' && (
+                  <Markdown
+                    components={{
+                      code: CodeBlock,
+                    }}
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeKatex]}
+                    className={cn(ms.markdown)}
+                  >
+                    {messages.content}
+                  </Markdown>
+                )}
               </li>
             );
           })}
+
           <div ref={bottomRef} />
         </ul>
       </div>
@@ -156,6 +161,7 @@ function App() {
               type="button"
               className={cn(' rounded-xl p-4 ring-slate-800/20 transition-all hover:ring-2')}
               onClick={() => setOpen(false)}
+              aria-label="Close"
             >
               <X className="h-4 w-4 text-slate-800" />
             </button>
